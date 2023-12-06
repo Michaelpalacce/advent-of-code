@@ -95,17 +95,18 @@ type Field struct {
 	matrix [][]Node
 }
 
-func (f Field) getAllSymbols() []*SymbolNode {
-	result := make([]*SymbolNode, 0)
+func (f Field) getAllBattleShips() []*BattleshipNode {
+	result := make([]*BattleshipNode, 0)
 
 	for _, yLine := range f.matrix {
 		for x := 0; x < len(yLine); x++ {
 			xNode := yLine[x]
-			if xNode.GetNodeType() == SYMBOL_TYPE {
-				if v, ok := xNode.(*SymbolNode); ok {
+			if xNode.GetNodeType() == BATTLESHIP_TYPE {
+				if v, ok := xNode.(*BattleshipNode); ok {
 					result = append(result, v)
+					x = v.xEnd
 				} else {
-					log.Fatal("error: Should Have been a symbol node :/")
+					log.Fatal("error: Should Have been a battleship node :/")
 				}
 			}
 		}
@@ -114,11 +115,12 @@ func (f Field) getAllSymbols() []*SymbolNode {
 	return result
 }
 
-func (f Field) GetBattleshipsInRange(y int, xStart int, xEnd int) []*BattleshipNode {
-	if y < 0 || y >= len(f.matrix) {
-		return []*BattleshipNode{}
+func (f Field) HasSymbols(y int, xStart int, xEnd int) bool {
+
+	fmt.Println(y, xStart, xEnd)
+	if y <= 0 || y >= len(f.matrix) {
+		return false
 	}
-	fmt.Printf("y: %d, xS: %d, xE: %d\n", y, xStart, xEnd)
 
 	yLine := f.matrix[y]
 
@@ -129,32 +131,29 @@ func (f Field) GetBattleshipsInRange(y int, xStart int, xEnd int) []*BattleshipN
 	if xEnd >= len(yLine)-1 {
 		xEnd = len(yLine) - 1
 	}
+	fmt.Println(y, xStart, xEnd)
 
-	results := make([]*BattleshipNode, 0)
-	for x := xStart; x < xEnd+1; x++ {
-		xNode := yLine[x]
-		if xNode.GetNodeType() == BATTLESHIP_TYPE {
-			if v, ok := xNode.(*BattleshipNode); ok {
-				results = append(results, v)
-				x = v.xEnd
-			} else {
-				log.Fatal("error: Should Have been a symbol node :/")
-			}
+	nodes := yLine[xStart : xEnd+1]
+	for _, node := range nodes {
+
+		fmt.Println(node.GetNodeType())
+		fmt.Println(node)
+		if node.GetNodeType() == SYMBOL_TYPE {
+			return true
 		}
 	}
-	return results
+	return false
 }
 
-func (f Field) GetBattleshipsAround(symbol SymbolNode) []*BattleshipNode {
-	batX := symbol.GetX()
-	batY := symbol.GetY()
+func (f Field) HasSymbolsAround(battleship *BattleshipNode) bool {
+	fmt.Println(battleship)
+	batX := battleship.GetX()
+	batY := battleship.GetY()
+	batxEnd := battleship.xEnd
 
-	sameLineBattleships := f.GetBattleshipsInRange(batY, batX-1, batX+1)
-	upperLineBattleships := f.GetBattleshipsInRange(batY-1, batX-1, batX+1)
-	belowLineBattleships := f.GetBattleshipsInRange(batY+1, batX-1, batX+1)
-	fmt.Println(upperLineBattleships)
+	fmt.Println(f.HasSymbols(batY, batX-1, batxEnd+1))
 
-	return append(append(sameLineBattleships, belowLineBattleships...), upperLineBattleships...)
+	return f.HasSymbols(batY, batX-1, batxEnd+1) || f.HasSymbols(batY-1, batX-1, batxEnd+1) || f.HasSymbols(batY+1, batX-1, batxEnd+1)
 }
 
 func populateFieldMatrix(line string, y int, field *Field) {
@@ -223,26 +222,12 @@ func scanFileContents() {
 	}
 
 	result := 0
-	for _, symbol := range field.getAllSymbols() {
-		fmt.Println(symbol)
-		battleships := field.GetBattleshipsAround(*symbol)
-
-		if len(battleships) == 2 {
-			for _, bat := range battleships {
-				fmt.Println(bat)
-			}
-			result += battleships[0].getNum() * battleships[1].getNum()
+	for _, battleship := range field.getAllBattleShips() {
+		if ok := field.HasSymbolsAround(battleship); ok {
+			fmt.Println("hasSymbolsAround", battleship.GetX(), battleship.GetY(), battleship.numbers)
+			result += battleship.getNum()
 		}
 	}
-
-	// debugNode := field.matrix[1][12]
-	// fmt.Println(debugNode.GetNodeType())
-	// fmt.Println(debugNode)
-	// if v, ok := debugNode.(*SymbolNode); ok {
-	// 	field.GetBattleshipsAround(*v)
-	// } else {
-	// 	log.Fatal("error: Should Have been a symbol node :/")
-	// }
 
 	fmt.Println(result)
 
