@@ -1,4 +1,4 @@
-package main
+package first
 
 import (
 	"bufio"
@@ -10,7 +10,7 @@ import (
 )
 
 type Card struct {
-	Winners int
+	Numbers []int
 	Copies  int
 }
 
@@ -18,7 +18,7 @@ type Card struct {
 // Card {N}: 69 15 78 85 50 51 57 71 74 58 | 63 79  4 13 94 97 17 10 25 38 87 33 27 86 75 76 99 23 36 35 47 64 41 46 84
 // Card {N} is the card number
 // The first numbers are the winning numbers, the rest are the numbers on the card
-func parseCard(line string) Card {
+func parseCard(line string) []int {
 	sections := strings.Split(line, "|")
 	winningSection := sections[0]
 
@@ -47,27 +47,22 @@ func parseCard(line string) Card {
 		}
 	}
 
-	return Card{
-		Winners: len(winners),
-		Copies:  1,
-	}
+	return winners
 }
 
-// populateCopies is a function that populates the copies
-// of the next N cards where N is the number of winners.
-// If the current card has 2 copies and 2 winners, the next
-// 2 cards will have 2 copies each.
-func populateCopies(cardBox []Card) {
-	for index, card := range cardBox {
-		if card.Winners > 0 {
-			for i := 1; i <= card.Winners; i++ {
-				if (index + i) >= len(cardBox) {
-					break
-				}
-				cardBox[index+i].Copies += card.Copies
-			}
+// calculatePoints calculates the points for the winners
+// The first winner gets 1 point, the second 2, the third 4, the fourth 8, etc.
+func calculatePoints(winners []int) int {
+	points := 0
+	for i := range winners {
+		if i == 0 {
+			points = 1
+		} else {
+			points *= 2
 		}
 	}
+
+	return points
 }
 
 // Scan the file and calculate the points
@@ -83,18 +78,11 @@ func scanFileContents() {
 	scanner := bufio.NewScanner(file)
 
 	output := 0
-	cardBox := make([]Card, 0)
 
 	for scanner.Scan() {
 		line := scanner.Text()
 		card := parseCard(line)
-		cardBox = append(cardBox, card)
-	}
-
-	populateCopies(cardBox)
-
-	for _, card := range cardBox {
-		output += card.Copies
+		output += calculatePoints(card)
 	}
 
 	if err := scanner.Err(); err != nil {
