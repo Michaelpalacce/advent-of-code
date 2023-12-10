@@ -44,48 +44,19 @@ func main() {
 	nextRanges := seedRanges
 
 	for _, currentMap := range maps {
-		fmt.Println("currentMap", currentMap)
+		fmt.Println("NEWMAP")
 		currentRanges := nextRanges
 		nextRanges = make([][]int, 0)
 		for _, currentRange := range currentRanges {
-			fmt.Println("b", currentRange)
-			for _, mapping := range currentMap {
-				a1, a2 := float64(mapping.Source), float64(mapping.Source+mapping.Range)
-				b1, b2 := float64(currentRange[0]), float64(currentRange[0]+currentRange[1])
-
-				// Check for overlap
-				overlapStart := math.Max(a1, b1)
-				overlapEnd := math.Min(a2, b2)
-
-				if overlapStart < overlapEnd {
-					fmt.Println("overlap", overlapStart, overlapEnd)
-					overlapLength := overlapEnd - overlapStart
-					overlappedRange := []int{int(mapping.Destination + (int(overlapStart) - mapping.Source)), int(overlapLength)}
-					fmt.Println("overlappedRange", overlappedRange)
-					nextRanges = append(nextRanges, overlappedRange)
-					if overlapStart > b1 {
-						nextRanges = append(nextRanges, []int{currentRange[0], int(overlapStart - b1)})
-						fmt.Println("leftover", []int{currentRange[0], int(overlapStart - b1 - 1)})
-					}
-					if overlapEnd < b2 {
-						nextRanges = append(nextRanges, []int{int(overlapEnd), int(b2 - overlapEnd)})
-
-						fmt.Println("leftover", []int{int(overlapEnd), int(b2 - overlapEnd)})
-					}
-				}
-			}
-
-			if len(nextRanges) == 0 {
-				fmt.Println("no overlap")
-
-				nextRanges = append(nextRanges, currentRange)
-			}
+			nextRanges = append(nextRanges, findOverlaps(currentRange, currentMap)...)
 		}
+
 	}
 
 	lowestRangeStart := math.MaxInt64
 
 	fmt.Println("nextRanges", len(nextRanges))
+	fmt.Println("nextRanges", nextRanges)
 	for _, nextRange := range nextRanges {
 		if nextRange[0] < lowestRangeStart {
 			lowestRangeStart = nextRange[0]
@@ -93,6 +64,52 @@ func main() {
 	}
 
 	fmt.Println("lowestRangeStart", lowestRangeStart)
+}
+
+func findOverlaps(currentRange []int, currentMap []Mapping) [][]int {
+	fmt.Println("currentRange", currentRange)
+	fmt.Println("currentMap", currentMap)
+	overlaps := make([][]int, 0)
+	leftOvers := make([][]int, 0)
+
+	for _, mapping := range currentMap {
+		a1, a2 := float64(mapping.Source), float64(mapping.Source+mapping.Range)
+		b1, b2 := float64(currentRange[0]), float64(currentRange[0]+currentRange[1])
+
+		// Check for overlap
+		overlapStart := math.Max(a1, b1)
+		overlapEnd := math.Min(a2, b2)
+
+		if overlapStart < overlapEnd {
+			overlapLength := overlapEnd - overlapStart
+			overlappedRange := []int{int(mapping.Destination + (int(overlapStart) - mapping.Source)), int(overlapLength)}
+			overlaps = append(overlaps, overlappedRange)
+
+			if overlapStart > b1 {
+				leftOvers = append(leftOvers, []int{currentRange[0], int(overlapStart - b1)})
+				fmt.Println("leftover", []int{currentRange[0], int(overlapStart - b1)})
+			}
+			if overlapEnd < b2 {
+				leftOvers = append(leftOvers, []int{int(overlapEnd), int(b2 - overlapEnd)})
+				fmt.Println("leftover", []int{int(overlapEnd), int(b2 - overlapEnd)})
+			}
+			break
+		}
+	}
+	if len(overlaps) == 0 {
+		fmt.Println("no overlap")
+		overlaps = append(overlaps, currentRange)
+	}
+
+	fmt.Println("overlaps before", overlaps)
+	fmt.Println("leftovers", leftOvers)
+	for _, leftOver := range leftOvers {
+		extraOverlaps := findOverlaps(leftOver, currentMap)
+		overlaps = append(overlaps, extraOverlaps...)
+	}
+	fmt.Println("TOTAL overlaps", overlaps)
+
+	return overlaps
 }
 
 // Function to parse space-separated numbers from a string
