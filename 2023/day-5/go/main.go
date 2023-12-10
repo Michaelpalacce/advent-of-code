@@ -17,7 +17,7 @@ type Mapping struct {
 }
 
 func main() {
-	filePath := "debug.txt"
+	filePath := "input.txt"
 
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -39,71 +39,60 @@ func main() {
 	// Arbitrarily read the next line
 	scanner.Scan()
 
-	// Read seed-to-soil map
-	seedToSoilMap := readMap(scanner)
-	soilToFertilizerMap := readMap(scanner)
-	fertilizerToWaterMap := readMap(scanner)
-	waterToLightMap := readMap(scanner)
-	lightToTemperatureMap := readMap(scanner)
-	temperatureToHumidityMap := readMap(scanner)
-	humidityToLocationMap := readMap(scanner)
-	lowestLocation := -1
-	for _, seedRange := range seedRanges {
-		fmt.Println("seed", seedRange)
-		soil := findOverlapAndReturnDestination(seedRange, seedToSoilMap)
-		fmt.Println("soil", soil)
-		fertilizer := findOverlapAndReturnDestination(soil, soilToFertilizerMap)
-		fmt.Println("fertilizer", fertilizer)
-		water := findOverlapAndReturnDestination(fertilizer, fertilizerToWaterMap)
-		fmt.Println("water", water)
-		light := findOverlapAndReturnDestination(water, waterToLightMap)
-		fmt.Println("light", light)
-		temperature := findOverlapAndReturnDestination(light, lightToTemperatureMap)
-		fmt.Println("temperature", temperature)
-		humidity := findOverlapAndReturnDestination(temperature, temperatureToHumidityMap)
-		fmt.Println("humidity", humidity)
-		location := findOverlapAndReturnDestination(humidity, humidityToLocationMap)
-		fmt.Println("location", location)
+	maps := readMaps(scanner)
 
-		if lowestLocation == -1 {
-			lowestLocation = location[0]
-		}
+	nextRanges := seedRanges
 
-		if location[0] < lowestLocation {
-			lowestLocation = location[0]
-		}
-	}
+	for _, currentMap := range maps {
+		fmt.Println("currentMap", currentMap)
+		currentRanges := nextRanges
+		nextRanges = make([][]int, 0)
+		for _, currentRange := range currentRanges {
+			fmt.Println("b", currentRange)
+			for _, mapping := range currentMap {
+				a1, a2 := float64(mapping.Source), float64(mapping.Source+mapping.Range)
+				b1, b2 := float64(currentRange[0]), float64(currentRange[0]+currentRange[1])
 
-	fmt.Println("lowestLocation", lowestLocation)
-}
+				// Check for overlap
+				overlapStart := math.Max(a1, b1)
+				overlapEnd := math.Min(a2, b2)
 
-// The only thing missing for the solutino is that I need to still return the unmatched ones :/
-func findOverlapAndReturnDestination(input []int, mappings []Mapping) []int {
-	for _, mapping := range mappings {
-		a1, a2 := float64(mapping.Source), float64(mapping.Source+mapping.Range)
-		b1, b2 := float64(input[0]), float64(input[0]+input[1])
+				if overlapStart < overlapEnd {
+					fmt.Println("overlap", overlapStart, overlapEnd)
+					overlapLength := overlapEnd - overlapStart
+					overlappedRange := []int{int(mapping.Destination + (int(overlapStart) - mapping.Source)), int(overlapLength)}
+					fmt.Println("overlappedRange", overlappedRange)
+					nextRanges = append(nextRanges, overlappedRange)
+					if overlapStart > b1 {
+						nextRanges = append(nextRanges, []int{currentRange[0], int(overlapStart - b1)})
+						fmt.Println("leftover", []int{currentRange[0], int(overlapStart - b1 - 1)})
+					}
+					if overlapEnd < b2 {
+						nextRanges = append(nextRanges, []int{int(overlapEnd), int(b2 - overlapEnd)})
 
-		// Check for overlap
-		overlapStart := math.Max(a1, b1)
-		overlapEnd := math.Min(a2, b2)
+						fmt.Println("leftover", []int{int(overlapEnd), int(b2 - overlapEnd)})
+					}
+				}
+			}
 
-		if overlapStart < overlapEnd {
-			fmt.Println("overlap", overlapStart, overlapEnd)
-			overlapLength := overlapEnd - overlapStart
-			return []int{int(mapping.Destination +(int(overlapStart) - mapping.Source)), int(overlapLength)}
+			if len(nextRanges) == 0 {
+				fmt.Println("no overlap")
+
+				nextRanges = append(nextRanges, currentRange)
+			}
 		}
 	}
 
-	return input
-}
+	lowestRangeStart := math.MaxInt64
 
-func findMappingAndReturnDestination(input int, mappings []Mapping) int {
-	for _, mapping := range mappings {
-		if mapping.Source < input && mapping.Source+mapping.Range > input {
-			return mapping.Destination + (input - mapping.Source)
+	fmt.Println("nextRanges", len(nextRanges))
+	for _, nextRange := range nextRanges {
+		if nextRange[0] < lowestRangeStart {
+			lowestRangeStart = nextRange[0]
 		}
 	}
-	return input
+
+	fmt.Println("lowestRangeStart", lowestRangeStart)
 }
 
 // Function to parse space-separated numbers from a string
@@ -116,6 +105,19 @@ func parseNumbers(input string) []int {
 		}
 	}
 	return numbers
+}
+
+func readMaps(scanner *bufio.Scanner) [][]Mapping {
+	maps := make([][]Mapping, 0)
+	for {
+		oneMap := readMap(scanner)
+		if len(oneMap) == 0 {
+			break
+		}
+		maps = append(maps, oneMap)
+	}
+
+	return maps
 }
 
 // Function to read a map from the input
