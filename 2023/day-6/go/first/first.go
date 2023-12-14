@@ -33,30 +33,32 @@ func (r *Race) CalculateUpperBound(lowerBound int) int {
 	return r.TimeMs - lowerBound
 }
 
+// func (r *Race) CalculatePossibleWins(race Race) []int {
+// }
+
 // Parses the following input
 // Time:        59     79     65     75
-func parseInput(input string) int {
+func parseInput(input string) []int {
 	input = strings.Replace(input, "Time: ", "", 1)
 	input = strings.Replace(input, "Distance: ", "", 1)
-	result := ""
+	result := []int{}
 	for _, v := range strings.Split(input, " ") {
 		if v == "" {
 			continue
 		}
 
-		result += v
-	}
+		i, err := strconv.Atoi(strings.TrimSpace(v))
+		if err != nil {
+			panic(err)
+		}
 
-	resultInt, err := strconv.Atoi(result)
-	if err != nil {
-		log.Fatal(err)
+		result = append(result, i)
 	}
-
-	return resultInt
+	return result
 }
 
 func main() {
-	filePath := "input.txt"
+	filePath := "debug.txt"
 
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -72,15 +74,28 @@ func main() {
 	scanner.Scan()
 	distance := parseInput(scanner.Text())
 
-	race := Race{
-		TimeMs: time,
-		Milim:  distance,
-		// MilimPerTimeMs: 0,
+	races := []Race{}
+
+	for i := 0; i < len(time); i++ {
+		races = append(races, Race{
+			TimeMs: time[i],
+			Milim:  distance[i],
+			// MilimPerTimeMs: 0,
+		})
 	}
 
-	fmt.Println(race)
-	lowerBound := race.CalculateLowerBound()
-	upperBound := race.CalculateUpperBound(lowerBound)
-	wins := upperBound - lowerBound + 1
-	fmt.Printf("{%d:%d}. Total Wins: %d\n", lowerBound, upperBound, wins)
+	result := 1 // So we can multiply
+
+	for _, race := range races {
+		fmt.Println(race)
+		lowerBound := race.CalculateLowerBound()
+		upperBound := race.CalculateUpperBound(lowerBound)
+		wins := upperBound - lowerBound + 1
+		fmt.Printf("{%d:%d}. Total Wins: %d\n", lowerBound, upperBound, wins)
+
+		result *= wins
+		// fmt.Printf("%d", race.CalculateLowerBound())
+	}
+
+	fmt.Println(result)
 }
