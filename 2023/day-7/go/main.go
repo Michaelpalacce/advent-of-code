@@ -18,6 +18,14 @@ var (
 	fullHouseBitMask    = oneOfAKindBitMask | threeOfAKindBitMask
 )
 
+// Create a lookup table for counts to bitmask
+var countToMask = map[int]int{
+	5: fiveOfAKindBitMask,
+	4: fourOfAKindBitMask,
+	3: threeOfAKindBitMask,
+	2: oneOfAKindBitMask,
+}
+
 type Result struct {
 	ResultMask int
 	HighCard   int
@@ -37,9 +45,6 @@ func (h *Hand) GetResult() *Result {
 	return h.result
 }
 
-// calculateResults calculates the results of the hand
-// and returns a result
-// uses bitwise operations to calculate the results
 func (h *Hand) calculateResults() *Result {
 	pointer := make(map[string]int)
 
@@ -53,15 +58,6 @@ func (h *Hand) calculateResults() *Result {
 
 	bitwiseResult := 0b00000000
 
-	// Create a lookup table for counts to bitmask
-	countToMask := map[int]int{
-		5: fiveOfAKindBitMask,
-		4: fourOfAKindBitMask,
-		3: threeOfAKindBitMask,
-		2: oneOfAKindBitMask,
-	}
-
-	// Handle non-"J" cards
 	for char, value := range pointer {
 		if char == "J" {
 			continue
@@ -76,7 +72,6 @@ func (h *Hand) calculateResults() *Result {
 			bitwiseResult |= mask
 		}
 	}
-	fmt.Printf("Initial Bitwise result for %s: %b\n", h.Hand, bitwiseResult)
 
 	// Ew, this is gross
 	// TODO: Clean this up, but just say you would, don't actually do it.
@@ -121,8 +116,6 @@ func (h *Hand) calculateResults() *Result {
 		}
 	}
 
-	fmt.Printf("Bitwise result for %s: %b\n", h.Hand, bitwiseResult)
-
 	return &Result{
 		ResultMask: bitwiseResult,
 		HighCard:   0,
@@ -152,9 +145,6 @@ func (h *Hand) Compare(otherHand Hand) int {
 	return 0
 }
 
-// Example hand: 32T3K 765
-// 32T3K = 2 of a kind
-// 765 = Points
 func ParseHandLine(line string) (Hand, error) {
 	parsedLine := strings.Split(line, " ")
 
@@ -175,6 +165,8 @@ func cardToValue(card byte) int {
 	valueInt, err := strconv.Atoi(string(card))
 	if err != nil {
 		switch card {
+		case 'J':
+			valueInt = 0
 		case 'T':
 			valueInt = 10
 		case 'Q':
@@ -183,8 +175,6 @@ func cardToValue(card byte) int {
 			valueInt = 13
 		case 'A':
 			valueInt = 14
-		case 'J':
-			valueInt = 0
 		}
 	}
 	return valueInt
@@ -209,7 +199,6 @@ func partition(arr []Hand, low, high int) ([]Hand, int) {
 	i := low
 	for j := low; j < high; j++ {
 		if arr[j].Compare(pivot) < 0 {
-			// if arr[j] < pivot {
 			arr[i], arr[j] = arr[j], arr[i]
 			i++
 		}
