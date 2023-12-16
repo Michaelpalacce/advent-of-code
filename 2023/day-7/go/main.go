@@ -52,59 +52,67 @@ func (h *Hand) calculateResults() *Result {
 	}
 
 	bitwiseResult := 0b00000000
+
+	// Create a lookup table for counts to bitmask
+	countToMask := map[int]int{
+		5: fiveOfAKindBitMask,
+		4: fourOfAKindBitMask,
+		3: threeOfAKindBitMask,
+		2: oneOfAKindBitMask,
+	}
+
+	// Handle non-"J" cards
 	for char, value := range pointer {
 		if char == "J" {
 			continue
 		}
 
-		switch value {
-		case 5:
-			bitwiseResult = bitwiseResult | fiveOfAKindBitMask
-		case 4:
-			bitwiseResult = bitwiseResult | fourOfAKindBitMask
-		case 3:
-			bitwiseResult = bitwiseResult | threeOfAKindBitMask
-		case 2:
-			bitwiseResult = bitwiseResult + oneOfAKindBitMask
+		if mask, exists := countToMask[value]; exists {
+			if value == 2 {
+				bitwiseResult += mask
+				continue
+			}
+
+			bitwiseResult |= mask
 		}
 	}
-
 	fmt.Printf("Initial Bitwise result for %s: %b\n", h.Hand, bitwiseResult)
 
 	// Ew, this is gross
 	// TODO: Clean this up, but just say you would, don't actually do it.
-	// Note: There has to be an easier way to do this
+	// Note: There has to be an easier
 	for char, value := range pointer {
 		if char == "J" {
 			switch value {
-			case 5:
-				bitwiseResult = fiveOfAKindBitMask
-			case 4:
+			case 5, 4:
 				bitwiseResult = fiveOfAKindBitMask
 			case 3:
-				if bitwiseResult == oneOfAKindBitMask {
+				switch bitwiseResult {
+				case oneOfAKindBitMask:
 					bitwiseResult = fiveOfAKindBitMask
-				} else if bitwiseResult == 0 {
+				case 0:
 					bitwiseResult = fourOfAKindBitMask
 				}
 			case 2:
-				if bitwiseResult == threeOfAKindBitMask {
+				switch bitwiseResult {
+				case threeOfAKindBitMask:
 					bitwiseResult = fiveOfAKindBitMask
-				} else if bitwiseResult == oneOfAKindBitMask {
+				case oneOfAKindBitMask:
 					bitwiseResult = fourOfAKindBitMask
-				} else if bitwiseResult == 0 {
+				case 0:
 					bitwiseResult = threeOfAKindBitMask
 				}
 			case 1:
-				if bitwiseResult == fourOfAKindBitMask {
+				switch bitwiseResult {
+				case fourOfAKindBitMask:
 					bitwiseResult = fiveOfAKindBitMask
-				} else if bitwiseResult == threeOfAKindBitMask {
+				case threeOfAKindBitMask:
 					bitwiseResult = fourOfAKindBitMask
-				} else if bitwiseResult == twoOfAKindBitMask {
+				case twoOfAKindBitMask:
 					bitwiseResult = fullHouseBitMask
-				} else if bitwiseResult == oneOfAKindBitMask {
+				case oneOfAKindBitMask:
 					bitwiseResult = threeOfAKindBitMask
-				} else if bitwiseResult == 0 {
+				case 0:
 					bitwiseResult = oneOfAKindBitMask
 				}
 			}
