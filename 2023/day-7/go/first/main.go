@@ -69,52 +69,6 @@ func (h *Hand) calculateResults() *Result {
 		}
 	}
 
-	fmt.Printf("Initial Bitwise result for %s: %b\n", h.Hand, bitwiseResult)
-
-	// Ew, this is gross
-	// TODO: Clean this up, but just say you would, don't actually do it.
-	// Note: There has to be an easier way to do this
-	for char, value := range pointer {
-		if char == "J" {
-			switch value {
-			case 5:
-				bitwiseResult = fiveOfAKindBitMask
-			case 4:
-				bitwiseResult = fiveOfAKindBitMask
-			case 3:
-				if bitwiseResult == oneOfAKindBitMask {
-					bitwiseResult = fiveOfAKindBitMask
-				} else if bitwiseResult == 0 {
-					bitwiseResult = fourOfAKindBitMask
-				}
-			case 2:
-				if bitwiseResult == threeOfAKindBitMask {
-					bitwiseResult = fiveOfAKindBitMask
-				} else if bitwiseResult == oneOfAKindBitMask {
-					bitwiseResult = fourOfAKindBitMask
-				} else if bitwiseResult == 0 {
-					bitwiseResult = threeOfAKindBitMask
-				}
-			case 1:
-				if bitwiseResult == fourOfAKindBitMask {
-					bitwiseResult = fiveOfAKindBitMask
-				} else if bitwiseResult == threeOfAKindBitMask {
-					bitwiseResult = fourOfAKindBitMask
-				} else if bitwiseResult == twoOfAKindBitMask {
-					bitwiseResult = fullHouseBitMask
-				} else if bitwiseResult == oneOfAKindBitMask {
-					bitwiseResult = threeOfAKindBitMask
-				} else if bitwiseResult == 0 {
-					bitwiseResult = oneOfAKindBitMask
-				}
-			}
-
-			break
-		}
-	}
-
-	fmt.Printf("Bitwise result for %s: %b\n", h.Hand, bitwiseResult)
-
 	return &Result{
 		ResultMask: bitwiseResult,
 		HighCard:   0,
@@ -122,18 +76,27 @@ func (h *Hand) calculateResults() *Result {
 }
 
 func (h *Hand) Compare(otherHand Hand) int {
+	fmt.Printf("Comparing %+v to %+v\n", h, otherHand)
 	handResult := h.GetResult()
 	otherHandResult := otherHand.GetResult()
 
+	fmt.Printf("Hand: %s, Result: %d\n", h.Hand, handResult.ResultMask)
+	fmt.Printf("Other Hand: %s, Result: %d\n", otherHand.Hand, otherHandResult.ResultMask)
+
 	if handResult.ResultMask > otherHandResult.ResultMask {
+		fmt.Printf("Hand %s is better than %s\n", h.Hand, otherHand.Hand)
 		return 1
 	} else if handResult.ResultMask < otherHandResult.ResultMask {
+		fmt.Printf("Hand %s is worse than %s\n", h.Hand, otherHand.Hand)
 		return -1
 	}
 
 	for i := 0; i < len(h.Hand); i++ {
 		value := cardToValue(h.Hand[i])
 		otherValue := cardToValue(otherHand.Hand[i])
+		fmt.Printf("Comparing %s to %s\n", string(h.Hand[i]), string(otherHand.Hand[i]))
+		fmt.Printf("Comparing %d to %d\n", value, otherValue)
+
 		if value > otherValue {
 			return 1
 		} else if value < otherValue {
