@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 	"unicode/utf8"
 )
 
@@ -37,7 +38,8 @@ func NewNode(value string) *Node {
 	}
 
 	node := &Node{
-		Value: value,
+		Value:    value,
+		LastChar: value[len(value)-1],
 	}
 
 	constructorMap[value] = node
@@ -46,10 +48,11 @@ func NewNode(value string) *Node {
 }
 
 type Node struct {
-	Parent *Node
-	Left   *Node
-	Right  *Node
-	Value  string
+	Parent   *Node
+	Left     *Node
+	Right    *Node
+	Value    string
+	LastChar byte
 }
 
 func (n *Node) AddChildren(nodeLine string) {
@@ -70,6 +73,27 @@ func repeatSlice(original []rune, times int) []rune {
 		repeated = append(repeated, original...)
 	}
 	return repeated
+}
+
+// greatest common divisor (GCD) via Euclidean algorithm
+func GCD(a, b int) int {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
+	}
+	return a
+}
+
+// find Least Common Multiple (LCM) via GCD
+func LCM(a, b int, integers ...int) int {
+	result := a * b / GCD(a, b)
+
+	for i := 0; i < len(integers); i++ {
+		result = LCM(result, integers[i])
+	}
+
+	return result
 }
 
 func main() {
@@ -105,29 +129,44 @@ func main() {
 
 	}
 
-	currentNode := constructorMap["AAA"]
+	currentNodes := []*Node{}
 
-	steps := 0
-
-endWalk:
-	for {
-		for _, direction := range directions {
-			fmt.Printf("Current node: %s, Current Direction: %c\n", currentNode.Value, direction)
-
-			steps++
-
-			if direction == 'L' {
-				currentNode = currentNode.Left
-			} else {
-				currentNode = currentNode.Right
-			}
-
-			if currentNode.Value == "ZZZ" {
-				fmt.Println("Reached the end of the tree")
-				break endWalk
-			}
+	for _, node := range constructorMap {
+		if node.LastChar == 'A' {
+			currentNodes = append(currentNodes, node)
 		}
 	}
 
-	fmt.Println("Steps: ", steps)
+	lcms := make([]int, len(currentNodes))
+
+	waitGroup := sync.WaitGroup{}
+
+	for i, currentNode := range currentNodes {
+		waitGroup.Add(1)
+		go func(currentNode *Node, currentPos *int) {
+		endWalk:
+			for {
+				for _, direction := range directions {
+					*currentPos++
+
+					if direction == 'L' {
+						currentNode = currentNode.Left
+					} else {
+						currentNode = currentNode.Right
+					}
+
+					if currentNode.LastChar == 'Z' {
+						waitGroup.Done()
+						break endWalk
+					}
+				}
+			}
+		}(currentNode, &lcms[i])
+	}
+
+	waitGroup.Wait()
+
+	numSteps := LCM(lcms[0], lcms[1], lcms[2:]...)
+
+	fmt.Println("Steps: ", numSteps)
 }
