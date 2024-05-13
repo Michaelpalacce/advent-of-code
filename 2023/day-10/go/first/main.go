@@ -33,23 +33,11 @@ func main() {
 
 	for y := 0; y < len(grid); y++ {
 		for x := 0; x < len(grid[y]); x++ {
-			fmt.Printf("Y: %d, X: %d\n", y, x)
 			findConnections(grid, x, y)
 		}
 	}
 
 	startPipe := determineStart(grid)
-
-	for _, line := range grid {
-		fmt.Println("---------------------------------------")
-		for _, pipe := range line {
-			fmt.Printf("Pipe: %+v\n", pipe)
-			for _, connection := range pipe.Connections {
-				fmt.Print(connection.Symbol)
-			}
-			fmt.Println()
-		}
-	}
 
 	fmt.Printf("Furthest pipe: %d\n", findFurthestPipe(startPipe.Connections, []*Pipe{startPipe}, 1))
 }
@@ -109,7 +97,6 @@ func findConnections(grid [][]*Pipe, x int, y int) {
 			connections = append(connections, grid[y][x-1])
 		}
 		if y < len(grid)-1 {
-			fmt.Printf("BAD: Y: %d, X: %d\n", y, x)
 			connections = append(connections, grid[y+1][x])
 		}
 	case "L":
@@ -146,14 +133,6 @@ func findFurthestPipe(entrances []*Pipe, previousPipes []*Pipe, counter int) int
 	nextPipes := make([]*Pipe, 0)
 
 	for _, entrance := range entrances {
-		fmt.Printf("Entrance: %+v\n", entrance)
-	}
-
-	for _, previousPipe := range previousPipes {
-		fmt.Printf("Previous pipe: %+v\n", previousPipe)
-	}
-
-	for _, entrance := range entrances {
 	con:
 		for _, connection := range entrance.Connections {
 			isPrevious := false
@@ -164,7 +143,6 @@ func findFurthestPipe(entrances []*Pipe, previousPipes []*Pipe, counter int) int
 			}
 
 			if !isPrevious {
-				fmt.Printf("Connection: %+v\n", connection)
 				nextPipes = append(nextPipes, connection)
 				break con
 			}
@@ -172,8 +150,6 @@ func findFurthestPipe(entrances []*Pipe, previousPipes []*Pipe, counter int) int
 	}
 
 	counter++
-
-	fmt.Printf("Next pipes: %+v\n", nextPipes)
 
 	if nextPipes[0] == nextPipes[1] {
 		return counter
