@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -14,8 +15,9 @@ type Galaxy struct {
 
 func main() {
 	cosmicExpansion := 999999
-	filePath := "input.txt"
-	// filePath := "debug.txt"
+	var filePath string
+	flag.StringVar(&filePath, "file", "input.txt", "The file path to load the data from")
+	flag.Parse()
 
 	file, err := os.Open(filePath)
 	if err != nil {
