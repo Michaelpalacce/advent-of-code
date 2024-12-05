@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	// filePath := "input.txt"
-	filePath := "debug.txt"
+	filePath := "input.txt"
+	// filePath := "debug.txt"
 
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -64,7 +64,7 @@ func first(file *os.File) {
 
 	for i := 0; i < len(leftIndexes); i++ {
 		fmt.Println(leftIndexes[i], rightIndexes[i])
-		size += math.Abs(float64(leftIndexes[i] - rightIndexes[i]))
+		size += math.Abs(float64(leftSide[leftIndexes[i]] - rightSide[rightIndexes[i]]))
 	}
 
 	fmt.Println(int(size))
