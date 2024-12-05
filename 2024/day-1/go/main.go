@@ -21,8 +21,8 @@ func main() {
 
 	defer file.Close()
 
-	first(file)
 	// first(file)
+	second(file)
 }
 
 func first(file *os.File) {
@@ -53,17 +53,9 @@ func first(file *os.File) {
 	leftIndexes := getIndexedArray(leftSide)
 	rightIndexes := getIndexedArray(rightSide)
 
-	fmt.Println(leftSide)
-	fmt.Println(leftIndexes)
-
-	fmt.Println("============================")
-	fmt.Println(rightSide)
-	fmt.Println(rightIndexes)
-
 	size := 0.0
 
 	for i := 0; i < len(leftIndexes); i++ {
-		fmt.Println(leftIndexes[i], rightIndexes[i])
 		size += math.Abs(float64(leftSide[leftIndexes[i]] - rightSide[rightIndexes[i]]))
 	}
 
@@ -105,8 +97,45 @@ func sortArray(arr []int) []int {
 func second(file *os.File) {
 	scanner := bufio.NewScanner(file)
 
+	var leftSide []int
+	var rightSide []int
+
 	for scanner.Scan() {
 		line := scanner.Text()
-		fmt.Println(line)
+		lineParts := strings.Split(line, "   ")
+
+		leftNumber, err := strconv.Atoi(lineParts[0])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		leftSide = append(leftSide, leftNumber)
+
+		rightNumber, err := strconv.Atoi(lineParts[1])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		rightSide = append(rightSide, rightNumber)
 	}
+
+	fmt.Println(getSimilarity(leftSide, rightSide))
+}
+
+func getSimilarity(leftSide []int, rightSide []int) int {
+	size := 0
+
+	for i := 0; i < len(leftSide); i++ {
+		leftValue := leftSide[i]
+		hits := 0
+		for j := 0; j < len(rightSide); j++ {
+			if leftValue == rightSide[j] {
+				hits++
+			}
+		}
+
+		size += leftValue * hits
+	}
+
+	return size
 }
