@@ -20,8 +20,8 @@ func main() {
 
 	defer file.Close()
 
-	first(file)
-	// second(file)
+	// first(file)
+	second(file)
 }
 
 func first(file *os.File) {
@@ -32,7 +32,7 @@ func first(file *os.File) {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if isSafe(line) {
+		if isSafe(convertToInts(line)) {
 			safeCount++
 		}
 	}
@@ -40,7 +40,7 @@ func first(file *os.File) {
 	fmt.Println(safeCount)
 }
 
-func isSafe(line string) bool {
+func convertToInts(line string) []int {
 	var err error
 	levels := strings.Split(line, " ")
 	intLevels := make([]int, len(levels))
@@ -52,6 +52,10 @@ func isSafe(line string) bool {
 		}
 	}
 
+	return intLevels
+}
+
+func isSafe(intLevels []int) bool {
 	// 0 means decreasing
 	direction := 0
 
@@ -82,9 +86,69 @@ func isSafe(line string) bool {
 func second(file *os.File) {
 	scanner := bufio.NewScanner(file)
 
+	safeCount := 0
+
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		fmt.Println(line)
+		if isSafeWithToleration(convertToInts(line)) {
+			safeCount++
+		}
 	}
+
+	fmt.Println(safeCount)
+}
+
+func isSafeWithToleration(intLevels []int) bool {
+	// 0 means decreasing
+	direction := 0
+
+	if intLevels[1] > intLevels[0] {
+		direction = 1
+	}
+
+	isMarkedUnsafe := false
+
+	for i := 1; i < len(intLevels); i++ {
+		if intLevels[i] == intLevels[i-1] {
+			isMarkedUnsafe = true
+			break
+		}
+
+		if direction == 0 && intLevels[i] > intLevels[i-1] {
+			isMarkedUnsafe = true
+			break
+		} else if direction == 1 && intLevels[i] < intLevels[i-1] {
+			isMarkedUnsafe = true
+			break
+		}
+
+		distance := intLevels[i] - intLevels[i-1]
+		if distance > 3 || distance < -3 {
+			isMarkedUnsafe = true
+			break
+		}
+	}
+
+	if isMarkedUnsafe {
+		for i := 0; i < len(intLevels); i++ {
+			newLevels := remove(intLevels, i)
+
+			if isSafe(newLevels) {
+				fmt.Printf("%v is save with %v\n", intLevels, newLevels)
+				return true
+			}
+		}
+
+		return false
+	}
+
+	return true
+}
+
+func remove(slice []int, i int) []int {
+	newSlice := make([]int, len(slice)-1)
+	copy(newSlice, slice[:i])
+	copy(newSlice[i:], slice[i+1:])
+	return newSlice
 }
